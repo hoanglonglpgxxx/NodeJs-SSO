@@ -58,5 +58,5 @@ app.get("/userinfo", async (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
+    console.log(`test OAuth2 provider is running on http://localhost:${PORT}`);
 });
