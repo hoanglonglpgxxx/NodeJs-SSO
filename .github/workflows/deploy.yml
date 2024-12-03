@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Node.js App
 
 on:
   push:
@@ -10,27 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "16"
 
-      # Step 3: Install dependencies
       - name: Install Dependencies
         run: npm install
 
-      # Step 4: Build the project
       - name: Build the Application
-        run: npm run build # Ensure this matches your build script
+        run: npm run build # Replace with your build script, if applicable
 
-      # Step 5: Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build # Adjust this to your build output directory (e.g., 'dist' or 'public')
+      - name: Deploy Application
+        run: |
+          # Deploy steps here, depending on where you want to deploy
+          # Examples:
+          # 1. For SSH deployment
+          # scp -r ./build user@your-server:/path/to/deploy
+
+          # 2. For Docker-based deployment
+          # docker build -t your-app .
+          # docker run -d -p 80:3000 your-app
+
+          echo "Deployment steps are custom based on your server or hosting platform."
+
+      # Optional: Run the server in the background for testing purposes (for non-deployment workflows)
+      - name: Start Server in Detached Mode (Optional)
+        run: |
+          nohup npm start &
