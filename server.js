@@ -2,6 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const fs = require("fs");
+const { JWK } = require("jose");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,7 +16,7 @@ const users = [
 const CLIENT_ID = "TOKANNANANANA";
 const CLIENT_SECRET = "TOKENANANANA";
 const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/client/oidc/callback";
-const JWT_SECRET = "your_jwt_secret"; // Replace with a strong secret
+const JWT_SECRET = "c2509ffc604e84ccd997735ba8edafd23372424cfad27427d8741ec0840ecdd8"; // Replace with a strong secret
 
 // Temporary in-memory storage for authorization codes
 const authorizationCodes = new Map();
@@ -123,15 +125,19 @@ app.get("/userinfo", (req, res) => {
     }
 });
 
+// Load the public key
+const publicKey = fs.readFileSync("keys/public_key.pem");
+const jwk = JWK.asKey(publicKey, { alg: "RS256", use: "sig" });
+
 const jwks = {
     keys: [
         {
-            alg: "RS256",
-            kty: "RSA",
-            use: "sig",
-            kid: "your-key-id",
-            n: "base64url-encoded-public-key",
-            e: "AQAB",
+            alg: jwk.alg,
+            kty: jwk.kty,
+            use: jwk.use,
+            kid: jwk.kid,
+            n: jwk.n,
+            e: jwk.e,
         },
     ],
 };
@@ -140,8 +146,11 @@ app.get("/.well-known/jwks.json", (req, res) => {
     res.json(jwks);
 });
 
-
 // Start the Server
 app.listen(PORT, () => {
     console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
 });
+
+
+
+
