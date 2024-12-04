@@ -1,7 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
-const jwks = require("jwks-rsa");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -99,6 +98,7 @@ app.get("/userinfo", (req, res) => {
             name: user.username,
         });
     } catch (err) {
+        console.error("Token verification error:", err);
         res.status(401).send("Invalid token");
     }
 });
