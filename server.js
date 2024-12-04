@@ -69,23 +69,26 @@ app.post("/authorize", (req, res) => {
 
 // Token Endpoint
 app.post("/token", (req, res) => {
-    const { code, client_id, client_secret, redirect_uri } = req.body;
+    const { grant_type, code, redirect_uri, client_id, client_secret } = req.body;
+    console.log(grant_type, code, redirect_uri, client_id, client_secret);
 
-    if (client_id !== CLIENT_ID || client_secret !== CLIENT_SECRET || redirect_uri !== REDIRECT_URI) {
-        return res.status(400).json({ error: "Invalid client credentials or redirect_uri" });
+    if (
+        client_id !== CLIENT_ID ||
+        client_secret !== CLIENT_SECRET ||
+        redirect_uri !== REDIRECT_URI ||
+        grant_type !== "authorization_code"
+    ) {
+        return res.status(400).send("Invalid client credentials, redirect_uri, or grant_type");
     }
 
-    const authData = authorizationCodes.get(code);
-
-    if (!authData || authData.client_id !== client_id || authData.redirect_uri !== redirect_uri) {
-        return res.status(400).json({ error: "Invalid or expired authorization code" });
+    // Validate the authorization code
+    const authCode = authCodes.find((c) => c.code === code);
+    if (!authCode) {
+        return res.status(400).send("Invalid or expired authorization code");
     }
 
-    // Remove the authorization code after use
-    authorizationCodes.delete(code);
-
-    // Generate an access token
-    const token = jwt.sign({ userId: authData.user.id }, JWT_SECRET, { expiresIn: "1h" });
+    // Generate and return the access token
+    const token = jwt.sign({ userId: authCode.userId }, JWT_SECRET, { expiresIn: "1h" });
 
     res.json({
         access_token: token,
@@ -124,19 +127,20 @@ app.get("/userinfo", (req, res) => {
 const jwks = {
     keys: [
         {
-            kty: "oct", // Key Type
-            kid: "1",   // Key ID
-            use: "sig", // Usage: signature
-            alg: "HS256", // Algorithm
-            k: Buffer.from(JWT_SECRET).toString("base64"), // Base64-encoded secret
+            alg: "RS256",
+            kty: "RSA",
+            use: "sig",
+            kid: "your-key-id",
+            n: "base64url-encoded-public-key",
+            e: "AQAB",
         },
     ],
 };
 
-// JWKS endpoint
-app.get("/.well-known/jwks.json", (req, res) => {
+app.get("/jwks", (req, res) => {
     res.json(jwks);
 });
+
 
 // Start the Server
 app.listen(PORT, () => {
