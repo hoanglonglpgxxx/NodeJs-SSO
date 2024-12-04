@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const fs = require("fs");
-const { JWK } = require("jose");
+const jose = require("node-jose");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -129,28 +129,33 @@ app.get("/userinfo", (req, res) => {
     }
 });
 
-// Load the public key
-const publicKey = fs.readFileSync("keys/public_key.pem");
-const jwk = JWK.asKey(publicKey, { alg: "RS256", use: "sig" });
+// Load the public key and create JWK
+const publicKey = fs.readFileSync("keys/public_key.pem", "utf8");
 
-const jwks = {
-    keys: [
-        {
-            alg: jwk.alg,
-            kty: jwk.kty,
-            use: jwk.use,
-            kid: jwk.kid,
-            n: jwk.n,
-            e: jwk.e,
-        },
-    ],
-};
+jose.JWK.asKey(publicKey, "pem")
+    .then((key) => {
+        const jwks = {
+            keys: [
+                {
+                    alg: key.alg,
+                    kty: key.kty,
+                    use: key.use,
+                    kid: key.kid,
+                    n: key.n,
+                    e: key.e,
+                },
+            ],
+        };
 
-app.get("/.well-known/jwks.json", (req, res) => {
-    res.json(jwks);
-});
+        app.get("/.well-known/jwks.json", (req, res) => {
+            res.json(jwks);
+        });
 
-// Start the Server
-app.listen(PORT, () => {
-    console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
-});
+        // Start the Server
+        app.listen(PORT, () => {
+            console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error("Error loading public key:", err);
+    });
