@@ -13,27 +13,32 @@ const users = [
 const CLIENT_ID = "TOKANNANANANA";
 const CLIENT_SECRET = "TOKENANANANA";
 const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/oidc/callback";
-const JWT_SECRET = "supersecretkey";
+const JWT_SECRET = "your_jwt_secret"; // Replace with your actual JWT secret
 
-// Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+// Configure body-parser middleware
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.get("/login", (req, res) => {
-    const { client_id, redirect_uri, state } = req.query;
+    const client_id = req.query.client_id?.trim();
+    const redirect_uri = req.query.redirect_uri?.trim();
+    const state = req.query.state;
+
+    console.log("Received client_id:", client_id);
+    console.log("Received redirect_uri:", redirect_uri);
 
     if (client_id !== CLIENT_ID || redirect_uri !== REDIRECT_URI) {
         return res.status(400).send("Invalid client_id or redirect_uri");
     }
 
     res.send(`
-    <form method="POST" action="/authorize">
-      <input type="hidden" name="state" value="${state}" />
-      <input type="text" name="username" placeholder="Username" required />
-      <input type="password" name="password" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
-  `);
+        <form method="POST" action="/authorize">
+            <input type="hidden" name="state" value="${state}" />
+            <input type="text" name="username" placeholder="Username" required />
+            <input type="password" name="password" placeholder="Password" required />
+            <button type="submit">Login</button>
+        </form>
+    `);
 });
 
 app.post("/authorize", (req, res) => {
@@ -45,30 +50,11 @@ app.post("/authorize", (req, res) => {
         return res.status(401).send("Invalid credentials");
     }
 
-    const code = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "5m" });
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
 
-    res.redirect(`${REDIRECT_URI}?code=${code}&state=${state}`);
-});
-
-app.post("/token", (req, res) => {
-    const { code, client_id, client_secret } = req.body;
-
-    if (client_id !== CLIENT_ID || client_secret !== CLIENT_SECRET) {
-        return res.status(400).send("Invalid client_id or client_secret");
-    }
-
-    try {
-        const payload = jwt.verify(code, JWT_SECRET);
-        const token = jwt.sign({ userId: payload.userId }, JWT_SECRET, { expiresIn: "1h" });
-
-        res.json({
-            access_token: token,
-            token_type: "Bearer",
-            expires_in: 3600,
-        });
-    } catch (err) {
-        res.status(400).send("Invalid code");
-    }
+    // Redirect to the redirect_uri with the token
+    res.redirect(`${REDIRECT_URI}?token=${token}&state=${state}`);
 });
 
 app.get("/userinfo", (req, res) => {
