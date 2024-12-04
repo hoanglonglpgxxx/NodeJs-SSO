@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,21 +14,18 @@ const users = [
 const CLIENT_ID = "TOKANNANANANA";
 const CLIENT_SECRET = "TOKENANANANA";
 const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/client/oidc/callback";
-const JWT_SECRET = "your_jwt_secret"; // Replace with your actual JWT secret
+const JWT_SECRET = "your_jwt_secret"; // Replace with a strong secret
 
-// Configure body-parser middleware
+// Temporary in-memory storage for authorization codes
+const authorizationCodes = new Map();
+
+// Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Login Endpoint
 app.get("/login", (req, res) => {
-    const client_id = req.query.client_id?.trim();
-    const redirect_uri = req.query.redirect_uri?.trim();
-    const state = req.query.state;
-
-    console.log("Received client_id:", client_id);
-    console.log("Expected client_id:", CLIENT_ID);
-    console.log("Received redirect_uri:", redirect_uri);
-    console.log("Expected redirect_uri:", REDIRECT_URI);
+    const { client_id, redirect_uri, state } = req.query;
 
     if (client_id !== CLIENT_ID || redirect_uri !== REDIRECT_URI) {
         return res.status(400).send("Invalid client_id or redirect_uri");
@@ -36,6 +34,8 @@ app.get("/login", (req, res) => {
     res.send(`
         <form method="POST" action="/authorize">
             <input type="hidden" name="state" value="${state}" />
+            <input type="hidden" name="redirect_uri" value="${redirect_uri}" />
+            <input type="hidden" name="client_id" value="${client_id}" />
             <input type="text" name="username" placeholder="Username" required />
             <input type="password" name="password" placeholder="Password" required />
             <button type="submit">Login</button>
@@ -43,8 +43,13 @@ app.get("/login", (req, res) => {
     `);
 });
 
+// Authorize Endpoint
 app.post("/authorize", (req, res) => {
-    const { username, password, state } = req.body;
+    const { username, password, client_id, redirect_uri, state } = req.body;
+
+    if (client_id !== CLIENT_ID || redirect_uri !== REDIRECT_URI) {
+        return res.status(400).send("Invalid client_id or redirect_uri");
+    }
 
     const user = users.find((u) => u.username === username && u.password === password);
 
@@ -52,22 +57,37 @@ app.post("/authorize", (req, res) => {
         return res.status(401).send("Invalid credentials");
     }
 
-    // Generate a JWT token
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+    // Generate an authorization code
+    const authCode = crypto.randomBytes(20).toString("hex");
 
-    // Redirect to the redirect_uri with the token
-    res.redirect(`${REDIRECT_URI}?token=${token}&state=${state}`);
+    // Store the authorization code with user and client details
+    authorizationCodes.set(authCode, { user, client_id, redirect_uri });
+
+    // Redirect back to the redirect_uri with the code and state
+    res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
 });
 
+// Token Endpoint
 app.post("/token", (req, res) => {
-    const { code, client_id, client_secret, redirect_uri } = req.body;
+    const { grant_type, code, redirect_uri, client_id, client_secret } = req.body;
+    console.log(grant_type, code, redirect_uri, client_id, client_secret);
 
-    if (client_id !== CLIENT_ID || client_secret !== CLIENT_SECRET || redirect_uri !== REDIRECT_URI) {
-        return res.status(400).json({ error: "Invalid client credentials or redirect_uri" });
+    if (
+        client_id !== CLIENT_ID ||
+        client_secret !== CLIENT_SECRET ||
+        redirect_uri !== REDIRECT_URI ||
+        grant_type !== "authorization_code"
+    ) {
+        return res.status(400).send("Invalid client credentials, redirect_uri, or grant_type");
     }
 
-    // Generate an access token
-    const token = jwt.sign({ userId: "user_id_from_code" }, JWT_SECRET, { expiresIn: "1h" });
+    const authCode = authCodes.find((c) => c.code === code);
+    if (!authCode) {
+        return res.status(400).send("Invalid or expired authorization code");
+    }
+
+    // Generate and return the access token
+    const token = jwt.sign({ userId: authCode.userId }, JWT_SECRET, { expiresIn: "1h" });
 
     res.json({
         access_token: token,
@@ -76,6 +96,7 @@ app.post("/token", (req, res) => {
     });
 });
 
+// Userinfo Endpoint
 app.get("/userinfo", (req, res) => {
     const authHeader = req.headers.authorization;
 
@@ -98,26 +119,27 @@ app.get("/userinfo", (req, res) => {
             name: user.username,
         });
     } catch (err) {
-        console.error("Token verification error:", err);
         res.status(401).send("Invalid token");
     }
 });
 
-// JWKS endpoint
+const jwks = {
+    keys: [
+        {
+            alg: "RS256",
+            kty: "RSA",
+            use: "sig",
+            kid: "your-key-id",
+            n: "base64url-encoded-public-key",
+            e: "AQAB",
+        },
+    ],
+};
+
 app.get("/.well-known/jwks.json", (req, res) => {
-    const jwks = {
-        keys: [
-            {
-                kty: "RSA",
-                use: "sig",
-                kid: "1",
-                n: "your-public-key-n",
-                e: "AQAB"
-            }
-        ]
-    };
     res.json(jwks);
 });
+
 
 // Start the Server
 app.listen(PORT, () => {
