@@ -121,6 +121,23 @@ app.get("/userinfo", (req, res) => {
     }
 });
 
+const jwks = {
+    keys: [
+        {
+            kty: "oct", // Key Type
+            kid: "1",   // Key ID
+            use: "sig", // Usage: signature
+            alg: "HS256", // Algorithm
+            k: Buffer.from(JWT_SECRET).toString("base64"), // Base64-encoded secret
+        },
+    ],
+};
+
+// JWKS endpoint
+app.get("/.well-known/jwks.json", (req, res) => {
+    res.json(jwks);
+});
+
 // Start the Server
 app.listen(PORT, () => {
     console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
