@@ -137,7 +137,7 @@ const jwks = {
     ],
 };
 
-app.get("/jwks", (req, res) => {
+app.get("/.well-known/jwks.json", (req, res) => {
     res.json(jwks);
 });
 
