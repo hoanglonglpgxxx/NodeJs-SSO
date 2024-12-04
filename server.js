@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 
 // Initialize OAuth2 server
 const oauth = new OAuth2Server({
-    model: require("../authModel"), // Import the OAuth2 model
+    model: require("./authModel"), // Import the OAuth2 model
     accessTokenLifetime: 3600,
     allowBearerTokensInQueryString: true,
 });
