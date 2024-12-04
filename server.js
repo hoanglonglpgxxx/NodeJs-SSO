@@ -12,7 +12,7 @@ const users = [
 
 const CLIENT_ID = "TOKANNANANANA";
 const CLIENT_SECRET = "TOKENANANANA";
-const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/oidc/callback";
+const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/client/oidc/callback";
 const JWT_SECRET = "your_jwt_secret"; // Replace with your actual JWT secret
 
 // Configure body-parser middleware
