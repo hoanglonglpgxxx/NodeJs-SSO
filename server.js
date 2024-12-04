@@ -83,13 +83,13 @@ app.post("/token", (req, res) => {
         return res.status(400).send("Invalid client credentials, redirect_uri, or grant_type");
     }
 
-    const authCode = authCodes.find((c) => c.code === code);
+    const authCode = authorizationCodes.get(code);
     if (!authCode) {
         return res.status(400).send("Invalid or expired authorization code");
     }
 
     // Generate and return the access token
-    const token = jwt.sign({ userId: authCode.userId }, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ userId: authCode.user.id }, JWT_SECRET, { expiresIn: "1h" });
 
     res.json({
         access_token: token,
@@ -121,6 +121,7 @@ app.get("/userinfo", (req, res) => {
             name: user.username,
         });
     } catch (err) {
+        console.error("Token verification error:", err);
         res.status(401).send("Invalid token");
     }
 });
@@ -150,7 +151,3 @@ app.get("/.well-known/jwks.json", (req, res) => {
 app.listen(PORT, () => {
     console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
 });
-
-
-
-
