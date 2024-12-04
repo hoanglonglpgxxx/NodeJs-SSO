@@ -96,6 +96,9 @@ app.post("/token", (req, res) => {
         token_type: "Bearer",
         expires_in: 3600,
     });
+
+    // Remove the authorization code after it has been used
+    authorizationCodes.delete(code);
 });
 
 // Userinfo Endpoint
