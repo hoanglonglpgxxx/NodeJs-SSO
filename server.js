@@ -167,7 +167,7 @@ app.get("/userinfo", (req, res) => {
 
         res.json({
             sub: user.id,
-            name: user.username,
+            username: user.username,
         });
         console.log(`user info: ${user}`);
 
