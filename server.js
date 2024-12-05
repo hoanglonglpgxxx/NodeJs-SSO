@@ -120,7 +120,7 @@ app.post("/token", (req, res) => {
     // Generate ID Token
     const idToken = jwt.sign(
         {
-            iss: "https://matrix.mitsngeither.me",
+            iss: "https://matrix-mits-h5h3evd7a6g3a0gb.eastasia-01.azurewebsites.net",
             sub: authCode.user.id,
             aud: CLIENT_ID,
             exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
