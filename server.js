@@ -134,7 +134,7 @@ app.post("/token", (req, res) => {
         expires_in: 3600,
     });
 
-    console.log('end token route', accessToken, idToken);
+    console.log('end token route', `accessToken : ${accessToken}`, `idToken: ${idToken}`);
 
     authorizationCodes.delete(code);
 });
