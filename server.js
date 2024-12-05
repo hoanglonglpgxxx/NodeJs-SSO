@@ -157,32 +157,41 @@ app.post("/token", (req, res) => {
 
 
 // Userinfo Endpoint
+// Userinfo Endpoint
 app.get("/userinfo", (req, res) => {
-    console.log(req, res);
+    console.log('userinfo endpoint called');
+    console.log('Request headers:', req.headers);
 
     const authHeader = req.headers.authorization;
-    console.log('userinfo', authHeader);
+    console.log('Authorization header:', authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        console.error("Missing or invalid authorization header");
         return res.status(401).send("Missing or invalid authorization header");
     }
 
     const token = authHeader.split(" ")[1];
-    console.log(`user info token: ${token}`);
+    console.log(`Token received: ${token}`);
+
     try {
         const payload = jwt.verify(token, JWT_SECRET);
+        console.log('Token payload:', payload);
+
         const user = users.find((u) => u.id === payload.userId);
+        console.log('User found:', user);
 
         if (!user) {
+            console.error("User not found");
             return res.status(404).send("User not found");
         }
 
-        res.json({
+        const userInfo = {
             sub: user.id,
-            username: user.username,
-        });
-        console.log(`user info: ${user}`);
+            username: user.username, // Ensure this field matches the localpart_template
+        };
+        console.log('User info:', userInfo);
 
+        res.json(userInfo);
     } catch (err) {
         console.error("Token verification error:", err);
         res.status(401).send("Invalid token");
