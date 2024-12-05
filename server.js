@@ -138,7 +138,7 @@ app.post("/token", (req, res) => {
         expires_in: 3600,
     });
 
-    console.log('end token route', `accessToken : ${accessToken}`, `idToken: ${idToken}`);
+    console.log('end token route', `accessToken : ${accessToken}`, `idToken: ${idToken}, authCode: ${authCode}`);
 
     authorizationCodes.delete(code);
 });
@@ -166,6 +166,8 @@ app.get("/userinfo", (req, res) => {
             sub: user.id,
             name: user.username,
         });
+        console.log(`user info: ${user}`);
+
     } catch (err) {
         console.error("Token verification error:", err);
         res.status(401).send("Invalid token");
