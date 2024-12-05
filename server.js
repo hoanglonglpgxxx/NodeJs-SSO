@@ -47,7 +47,7 @@ app.get("/login", (req, res) => {
 
 // Authorize Endpoint
 app.post("/authorize", (req, res) => {
-    const { username, password, client_id, redirect_uri, state } = req.body;
+    const { username, password, client_id, redirect_uri, state, nonce } = req.body;
 
     if (client_id !== CLIENT_ID || redirect_uri !== REDIRECT_URI) {
         return res.status(400).send("Invalid client_id or redirect_uri");
@@ -63,11 +63,11 @@ app.post("/authorize", (req, res) => {
     const authCode = crypto.randomBytes(20).toString("hex");
 
     // Store the authorization code with user and client details
-    authorizationCodes.set(authCode, { user, client_id, redirect_uri });
+    authorizationCodes.set(authCode, { user, client_id, redirect_uri, nonce });
 
     // Redirect back to the redirect_uri with the code and state
     res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
-    console.log("Redirecting to:", `${redirect_uri}?code=${authCode}&state=${state}`);
+    console.log("Redirecting to:", `${redirect_uri}?code=${authCode}&state=${state}`, `nonce: ${nonce}`);
 });
 
 // Token Endpoint
@@ -108,16 +108,31 @@ app.post("/token", (req, res) => {
         return res.status(400).send("Invalid or expired authorization code");
     }
 
-    // Generate and return the access token
-    const token = jwt.sign({ userId: authCode.user.id }, JWT_SECRET, { expiresIn: "1h" });
+    // Generate ID Token
+    const idToken = jwt.sign(
+        {
+            iss: "https://matrix-mits-h5h3evd7a6g3a0gb.eastasia-01.azurewebsites.net",
+            sub: authCode.user.id,
+            aud: CLIENT_ID,
+            exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
+            iat: Math.floor(Date.now() / 1000), // Issued at
+            nonce: authCode.nonce, // Pass through nonce if available
+        },
+        JWT_SECRET
+    );
+
+    // Generate Access Token
+    const accessToken = jwt.sign({ userId: authCode.user.id }, JWT_SECRET, { expiresIn: "1h" });
 
     res.json({
-        access_token: token,
+        access_token: accessToken,
+        id_token: idToken,
         token_type: "Bearer",
         expires_in: 3600,
     });
 
-    // Remove the authorization code after it has been used
+    console.log('end token route', accessToken, idToken);
+
     authorizationCodes.delete(code);
 });
 
