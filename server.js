@@ -84,6 +84,22 @@ app.post("/token", (req, res) => {
     let clientId = req.body.client_id;
     let clientSecret = req.body.client_secret;
 
+    // If not in body, check Authorization header
+    if (!clientId || !clientSecret) {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Basic ")) {
+            const base64Credentials = authHeader.split(" ")[1];
+            const credentials = Buffer.from(base64Credentials, "base64").toString("ascii");
+            [clientId, clientSecret] = credentials.split(":");
+        }
+    }
+
+    console.log("Parsed client_id:", clientId);
+    console.log("Parsed client_secret:", clientSecret);
+
+    const { grant_type, code, redirect_uri } = req.body;
+    console.log('token route', grant_type, code, redirect_uri, clientId, clientSecret);
+
     if (
         clientId !== CLIENT_ID ||
         clientSecret !== CLIENT_SECRET ||
@@ -131,6 +147,7 @@ app.post("/token", (req, res) => {
 // Userinfo Endpoint
 app.get("/userinfo", (req, res) => {
     const authHeader = req.headers.authorization;
+    console.log('userinfo', authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).send("Missing or invalid authorization header");
@@ -148,7 +165,7 @@ app.get("/userinfo", (req, res) => {
 
         res.json({
             sub: user.id,
-            username: user.username,
+            name: user.username,
         });
         console.log(`user info: ${user}`);
 
