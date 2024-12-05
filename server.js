@@ -138,7 +138,7 @@ app.post("/token", (req, res) => {
         expires_in: 3600,
     });
 
-    console.log('end token route', `accessToken : ${accessToken}`, `idToken: ${idToken}, authCode: ${authCode}`);
+    console.log('end token route', `accessToken : ${accessToken}`, `idToken: ${idToken}, authCode: ${JSON.parse(authCode)}`);
 
     authorizationCodes.delete(code);
 });
@@ -184,8 +184,8 @@ jose.JWK.asKey(publicKey, "pem")
                 {
                     alg: key.alg || "RS256",
                     kty: key.kty || "RSA",
-                    use: "sig",  // Indicates this key is used for signing
-                    kid: key.kid || crypto.randomBytes(8).toString("hex"), // Generate a unique key ID if missing
+                    use: "sig",
+                    kid: key.kid || crypto.randomBytes(8).toString("hex"),
                     n: key.n || key.toJSON().n,
                     e: key.e || key.toJSON().e,
                 },
@@ -196,7 +196,6 @@ jose.JWK.asKey(publicKey, "pem")
             res.json(jwks);
         });
 
-        // Start the Server
         app.listen(PORT, () => {
             console.log(`OAuth2 provider is running on http://localhost:${PORT}`);
         });
