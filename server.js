@@ -223,7 +223,7 @@ jose.JWK.asKey(publicKey, "pem")
         });
     })
     .catch((err) => {
-        console.error("Error creating JWKS/loading public key:", err);
+        console.error("Error creating JWKS/loading public key testtesttest:", err);
     });
 
 
