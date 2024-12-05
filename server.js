@@ -9,8 +9,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const users = [
-    { username: "mits1", password: "pass1", id: "1" },
-    { username: "mits2", password: "pass2", id: "2" },
+    { username: "mits1", password: "pass1", id: "1", name: "Lê Hoàng A" },
+    { username: "mits2", password: "pass2", id: "2", name: "Lê Hoàng B" },
 ];
 
 const CLIENT_ID = "TOKANNANANANA";
@@ -81,9 +81,6 @@ const privateKey = fs.readFileSync("keys/private_key.pem", "utf8");
 
 // Token Endpoint
 app.post("/token", (req, res) => {
-    console.log("Token Request Headers:", req.headers);
-    console.log("Token Request Body:", req.body);
-
     let clientId = req.body.client_id;
     let clientSecret = req.body.client_secret;
 
@@ -187,7 +184,8 @@ app.get("/userinfo", (req, res) => {
 
         const userInfo = {
             sub: user.id,
-            username: user.username, // Ensure this field matches the localpart_template
+            username: user.username,
+            name: user.name,
         };
         console.log('User info:', userInfo);
 
