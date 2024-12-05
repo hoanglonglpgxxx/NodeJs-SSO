@@ -176,12 +176,12 @@ jose.JWK.asKey(publicKey, "pem")
         const jwks = {
             keys: [
                 {
-                    alg: key.alg,
-                    kty: key.kty,
+                    alg: key.alg || "RS256",
+                    kty: key.kty || "RSA",
                     use: "sig",  // Indicates this key is used for signing
-                    kid: key.kid,
-                    n: key.n,
-                    e: key.e,
+                    kid: key.kid || crypto.randomBytes(8).toString("hex"), // Generate a unique key ID if missing
+                    n: key.n || key.toJSON().n,
+                    e: key.e || key.toJSON().e,
                 },
             ],
         };
