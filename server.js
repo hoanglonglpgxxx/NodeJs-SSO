@@ -18,6 +18,9 @@ const CLIENT_SECRET = "TOKENANANANA";
 const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/client/oidc/callback";
 const JWT_SECRET = "c2509ffc604e84ccd997735ba8edafd23372424cfad27427d8741ec0840ecdd8"; // Replace with a strong secret
 
+
+
+
 // Temporary in-memory storage for authorization codes
 const authorizationCodes = new Map();
 
@@ -138,7 +141,7 @@ app.post("/token", (req, res) => {
         expires_in: 3600,
     });
 
-    console.log('end token route', `req header: ${req.headers.authorization}, authCode.user.id: ${authCode.user.id}`);
+    console.log('end token route', `accessToken: ${accessToken}, authCode.user.id: ${authCode.user.id}, accessToken`);
 
     authorizationCodes.delete(code);
 });
