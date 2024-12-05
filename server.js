@@ -141,7 +141,16 @@ app.post("/token", (req, res) => {
         expires_in: 3600,
     });
 
-    console.log('end token route', `accessToken: ${accessToken}, authCode.user.id: ${authCode.user.id}, accessToken`);
+    console.log("Received /token request");
+    console.log("Client ID:", clientId);
+    console.log("Client Secret:", clientSecret);
+    console.log("Grant Type:", grant_type);
+    console.log("Code:", code);
+    console.log("Redirect URI:", redirect_uri);
+
+    console.log("Storing authorization code:", authCode);
+
+    console.log("Retrieved authorization code:", authCode);
 
     authorizationCodes.delete(code);
 });
