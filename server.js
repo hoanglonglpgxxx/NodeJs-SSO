@@ -70,6 +70,8 @@ app.post("/authorize", (req, res) => {
     console.log("Redirecting to:", `${redirect_uri}?code=${authCode}&state=${state}`, `nonce: ${nonce}`);
 });
 
+const privateKey = fs.readFileSync("keys/private_key.pem", "utf8");
+
 // Token Endpoint
 app.post("/token", (req, res) => {
     console.log("Token Request Headers:", req.headers);
@@ -118,7 +120,8 @@ app.post("/token", (req, res) => {
             iat: Math.floor(Date.now() / 1000), // Issued at
             nonce: authCode.nonce, // Pass through nonce if available
         },
-        JWT_SECRET
+        privateKey,
+        { algorithm: "RS256" }
     );
 
     // Generate Access Token
@@ -175,7 +178,7 @@ jose.JWK.asKey(publicKey, "pem")
                 {
                     alg: key.alg,
                     kty: key.kty,
-                    use: key.use,
+                    use: "sig",  // Indicates this key is used for signing
                     kid: key.kid,
                     n: key.n,
                     e: key.e,
@@ -193,7 +196,7 @@ jose.JWK.asKey(publicKey, "pem")
         });
     })
     .catch((err) => {
-        console.error("Error loading public key:", err);
+        console.error("Error creating JWKS/loading public key:", err);
     });
 
 
