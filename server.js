@@ -16,12 +16,7 @@ const users = [
 const CLIENT_ID = "TOKANNANANANA";
 const CLIENT_SECRET = "TOKENANANANA";
 const REDIRECT_URI = "https://matrix.mitsngeither.me/_synapse/client/oidc/callback";
-const JWT_SECRET = "c2509ffc604e84ccd997735ba8edafd23372424cfad27427d8741ec0840ecdd8"; // Replace with a strong secret
 
-
-
-
-// Temporary in-memory storage for authorization codes
 const authorizationCodes = new Map();
 
 // Middleware
@@ -66,13 +61,10 @@ app.post("/authorize", (req, res) => {
         return res.status(401).send("Invalid credentials");
     }
 
-    // Generate an authorization code
     const authCode = crypto.randomBytes(20).toString("hex");
 
-    // Store the authorization code with user and client details
     authorizationCodes.set(authCode, { user, client_id, redirect_uri, nonce });
 
-    // Redirect back to the redirect_uri with the code and state
     res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
     console.log("Redirecting to:", `${redirect_uri}?code=${authCode}&state=${state}`, `nonce: ${nonce}`);
 });
@@ -84,7 +76,6 @@ app.post("/token", (req, res) => {
     let clientId = req.body.client_id;
     let clientSecret = req.body.client_secret;
 
-    // If not in body, check Authorization header
     if (!clientId || !clientSecret) {
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith("Basic ")) {
@@ -94,11 +85,7 @@ app.post("/token", (req, res) => {
         }
     }
 
-    console.log("Parsed client_id:", clientId);
-    console.log("Parsed client_secret:", clientSecret);
-
     const { grant_type, code, redirect_uri } = req.body;
-    console.log('token route', grant_type, code, redirect_uri, clientId, clientSecret);
 
     if (
         clientId !== CLIENT_ID ||
@@ -128,7 +115,6 @@ app.post("/token", (req, res) => {
         { algorithm: "RS256" }
     );
 
-    // Generate Access Token
     const accessToken = jwt.sign({ userId: authCode.user.id }, JWT_SECRET, { expiresIn: "1h" });
 
     res.json({
@@ -154,13 +140,8 @@ app.post("/token", (req, res) => {
 
 
 // Userinfo Endpoint
-// Userinfo Endpoint
 app.get("/userinfo", (req, res) => {
-    console.log('userinfo endpoint called');
-    console.log('Request headers:', req.headers);
-
     const authHeader = req.headers.authorization;
-    console.log('Authorization header:', authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         console.error("Missing or invalid authorization header");
@@ -168,7 +149,6 @@ app.get("/userinfo", (req, res) => {
     }
 
     const token = authHeader.split(" ")[1];
-    console.log(`Token received: ${token}`);
 
     try {
         const payload = jwt.verify(token, JWT_SECRET);
@@ -187,7 +167,6 @@ app.get("/userinfo", (req, res) => {
             username: user.username,
             name: user.name,
         };
-        console.log('User info:', userInfo);
 
         res.json(userInfo);
     } catch (err) {
