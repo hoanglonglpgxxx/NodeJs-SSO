@@ -33,7 +33,7 @@ app.get("/login", (req, res) => {
         return res.status(400).send("Invalid client_id or redirect_uri");
     }
 
-    console.log('Login route nounce param', nounce);
+    console.log('Login route nounce param', nonce);
 
 
     res.send(`
