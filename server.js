@@ -27,17 +27,21 @@ app.use(bodyParser.json());
 
 // Login Endpoint
 app.get("/login", (req, res) => {
-    const { client_id, redirect_uri, state } = req.query;
+    const { client_id, redirect_uri, state, nonce } = req.query;
 
     if (client_id !== CLIENT_ID || redirect_uri !== REDIRECT_URI) {
         return res.status(400).send("Invalid client_id or redirect_uri");
     }
+
+    console.log('Login route nounce param', nounce);
+
 
     res.send(`
         <form method="POST" action="/authorize">
             <input type="hidden" name="state" value="${state}" />
             <input type="hidden" name="redirect_uri" value="${redirect_uri}" />
             <input type="hidden" name="client_id" value="${client_id}" />
+            <input type="hidden" name="nonce" value="${nonce}" />
             <input type="text" name="username" placeholder="Username" required />
             <input type="password" name="password" placeholder="Password" required />
             <button type="submit">Login</button>
