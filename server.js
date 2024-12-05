@@ -67,16 +67,36 @@ app.post("/authorize", (req, res) => {
 
     // Redirect back to the redirect_uri with the code and state
     res.redirect(`${redirect_uri}?code=${authCode}&state=${state}`);
+    console.log("Redirecting to:", `${redirect_uri}?code=${authCode}&state=${state}`);
 });
 
 // Token Endpoint
 app.post("/token", (req, res) => {
-    const { grant_type, code, redirect_uri, client_id, client_secret } = req.body;
-    console.log(grant_type, code, redirect_uri, client_id, client_secret);
+    console.log("Token Request Headers:", req.headers);
+    console.log("Token Request Body:", req.body);
+
+    let clientId = req.body.client_id;
+    let clientSecret = req.body.client_secret;
+
+    // If not in body, check Authorization header
+    if (!clientId || !clientSecret) {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Basic ")) {
+            const base64Credentials = authHeader.split(" ")[1];
+            const credentials = Buffer.from(base64Credentials, "base64").toString("ascii");
+            [clientId, clientSecret] = credentials.split(":");
+        }
+    }
+
+    console.log("Parsed client_id:", clientId);
+    console.log("Parsed client_secret:", clientSecret);
+
+    const { grant_type, code, redirect_uri } = req.body;
+    console.log('token route', grant_type, code, redirect_uri, clientId, clientSecret);
 
     if (
-        client_id !== CLIENT_ID ||
-        client_secret !== CLIENT_SECRET ||
+        clientId !== CLIENT_ID ||
+        clientSecret !== CLIENT_SECRET ||
         redirect_uri !== REDIRECT_URI ||
         grant_type !== "authorization_code"
     ) {
@@ -100,6 +120,7 @@ app.post("/token", (req, res) => {
     // Remove the authorization code after it has been used
     authorizationCodes.delete(code);
 });
+
 
 // Userinfo Endpoint
 app.get("/userinfo", (req, res) => {
@@ -159,3 +180,5 @@ jose.JWK.asKey(publicKey, "pem")
     .catch((err) => {
         console.error("Error loading public key:", err);
     });
+
+
