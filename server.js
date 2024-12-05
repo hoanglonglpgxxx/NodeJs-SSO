@@ -153,7 +153,7 @@ app.get("/userinfo", (req, res) => {
     }
 
     const token = authHeader.split(" ")[1];
-
+    console.log(`user info token: ${token}`);
     try {
         const payload = jwt.verify(token, JWT_SECRET);
         const user = users.find((u) => u.id === payload.userId);
