@@ -138,7 +138,7 @@ app.post("/token", (req, res) => {
         expires_in: 3600,
     });
 
-    console.log('end token route', `accessToken : ${accessToken}`, `idToken: ${idToken}, authCode.user.id: ${authCode.user.id}`);
+    console.log('end token route', `req header: ${req.headers.authorization}, authCode.user.id: ${authCode.user.id}`);
 
     authorizationCodes.delete(code);
 });
@@ -146,6 +146,8 @@ app.post("/token", (req, res) => {
 
 // Userinfo Endpoint
 app.get("/userinfo", (req, res) => {
+    console.log(req, res);
+
     const authHeader = req.headers.authorization;
     console.log('userinfo', authHeader);
 
